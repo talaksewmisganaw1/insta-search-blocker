@@ -1,0 +1,9 @@
+{
+  "platforms": ["apple", "android", "web"],
+  "apple": {
+    "modules": ["InstagramBlockerModule"]
+  },
+  "android": {
+    "modules": ["expo.modules.instagramblocker.InstagramBlockerModule"]
+  }
+}
