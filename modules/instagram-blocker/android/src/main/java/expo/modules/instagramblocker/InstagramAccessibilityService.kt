@@ -92,11 +92,15 @@ class InstagramAccessibilityService : AccessibilityService() {
             if (isSearchOrExploreTab(desc, viewId)) {
                 return true
             }
-            if (containsSearchOrAiKeyword(text) ||
-                containsSearchOrAiKeyword(hint) ||
-                containsSearchOrAiKeyword(desc) ||
-                containsSearchOrAiKeyword(viewId)
-            ) {
+            if (text.length < 30 && desc.length < 30) {
+                if (containsSearchOrAiKeyword(text) ||
+                    containsSearchOrAiKeyword(hint) ||
+                    containsSearchOrAiKeyword(desc) ||
+                    containsSearchOrAiKeyword(viewId)
+                ) {
+                    return true
+                }
+            } else if (containsSearchOrAiKeyword(viewId)) {
                 return true
             }
         }
@@ -124,30 +128,32 @@ class InstagramAccessibilityService : AccessibilityService() {
     private fun findSearchInTree(node: AccessibilityNodeInfo?, depth: Int): Boolean {
         if (node == null || depth > MAX_SEARCH_DEPTH) return false
 
-        val text = node.text?.toString() ?: ""
-        val hint = node.hintText?.toString() ?: ""
-        val desc = node.contentDescription?.toString() ?: ""
-        val viewId = node.viewIdResourceName ?: ""
-        val className = node.className?.toString() ?: ""
+        if (node.isVisibleToUser) {
+            val text = node.text?.toString() ?: ""
+            val hint = node.hintText?.toString() ?: ""
+            val desc = node.contentDescription?.toString() ?: ""
+            val viewId = node.viewIdResourceName ?: ""
+            val className = node.className?.toString() ?: ""
 
-        // Case 1: Search / Explore bottom tab is actively selected
-        if (isTabSelected(node) && isSearchOrExploreTab(desc, viewId)) {
-            return true
-        }
+            // Case 1: Search / Explore bottom tab is actively selected
+            if (isTabSelected(node) && isSearchOrExploreTab(desc, viewId)) {
+                return true
+            }
 
-        // Case 2: An input field is currently focused and relates to search or Meta AI
-        if (node.isFocused && isSearchInputField(node, text, hint, desc, viewId, className)) {
-            return true
-        }
+            // Case 2: An input field is currently focused and relates to search or Meta AI
+            if (node.isFocused && isSearchInputField(node, text, hint, desc, viewId, className)) {
+                return true
+            }
 
-        // Case 3: Dedicated Search screen / Search fragment components
-        if (isDedicatedSearchScreen(text, desc, viewId, className)) {
-            return true
-        }
+            // Case 3: Dedicated Search screen / Search fragment components
+            if (isDedicatedSearchScreen(text, desc, viewId, className)) {
+                return true
+            }
 
-        // Case 4: The top Explore search header in the updated Instagram
-        if (isExploreSearchHeader(node, text, hint, desc, viewId, className)) {
-            return true
+            // Case 4: The top Explore search header in the updated Instagram
+            if (isExploreSearchHeader(node, text, hint, desc, viewId, className)) {
+                return true
+            }
         }
 
         // Check children
@@ -192,9 +198,7 @@ class InstagramAccessibilityService : AccessibilityService() {
         val isEditableOrText = node.isEditable ||
                 className.contains("EditText", ignoreCase = true) ||
                 className.contains("AutoCompleteTextView", ignoreCase = true) ||
-                className.contains("SearchEditText", ignoreCase = true) ||
-                className.contains("TextView", ignoreCase = true) ||
-                className.contains("View", ignoreCase = true)
+                className.contains("SearchEditText", ignoreCase = true)
 
         if (!isEditableOrText) return false
 
@@ -237,19 +241,6 @@ class InstagramAccessibilityService : AccessibilityService() {
             return true
         }
 
-        // Header search button / container with search or Meta AI
-        if (node.isClickable) {
-            val d = desc.lowercase()
-            val t = text.lowercase()
-            val h = hint.lowercase()
-            if ((d.contains("search") || t.contains("search") || h.contains("search") ||
-                 d.contains("meta ai") || t.contains("meta ai") || h.contains("meta ai")) &&
-                (v.contains("action_bar") || v.contains("header") || v.contains("search") || v.contains("title"))
-            ) {
-                return true
-            }
-        }
-
         return false
     }
 
@@ -263,7 +254,6 @@ class InstagramAccessibilityService : AccessibilityService() {
                 s.contains("ask meta") ||
                 s.contains("ask anything") ||
                 s.contains("imagine") ||
-                s.contains("find") ||
                 s.contains("rechercher") ||
                 s.contains("buscar") ||
                 s.contains("suche") ||
