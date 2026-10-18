@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
+    "@expo/config-plugins": "^57.0.9",
     "expo": "~57.0.2",
     "expo-dev-client": "~57.0.5",
     "expo-status-bar": "~57.0.0",
